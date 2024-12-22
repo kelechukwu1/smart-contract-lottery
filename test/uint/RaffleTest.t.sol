@@ -115,12 +115,30 @@ contract RaffleTest is Test {
         vm.prank(PLAYER);
         //Act
         raffle.enterRaffle{value: raffleEntranceFee}();
-        //Asset
+        //Assert
         address playerRecorded = raffle.getPlayer(0);
         assert(playerRecorded == PLAYER);
     }
-    // function testGetEntranceFee() public view {
-    //     uint256 expectedEntranceFee = raffleEntranceFee;
-    //     assert(raffle.getEntranceFee() == expectedEntranceFee);
-    // }
+
+    function testEmitsEventOnEntrance() public {
+        //Arrange
+        vm.prank(PLAYER);
+        //Act / Assert
+        vm.expectEmit(true, false, false, false, address(raffle));
+        emit RaffleEnter(PLAYER);
+        raffle.enterRaffle{value: raffleEntranceFee}();
+    }
+
+    function testDontAllowPlayersToEnterWhileRaffleIsCalculating() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: raffleEntranceFee}();
+        vm.warp(block.timestamp + automationUpdateInterval + 1);
+        vm.roll(block.number);
+        raffle.performUpkeep("");
+        //Act/Assert
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: raffleEntranceFee}();
+    }
 }
