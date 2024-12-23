@@ -11,7 +11,7 @@ contract CreateSubscription is Script {
         HelperConfig helperConfig = new HelperConfig();
         address vrfCordinator = helperConfig.getConfig().vrfCoordinator;
         //create a subscription
-        (uint256 subId, ) = createSubscrition(vrfCordinator);
+        (uint256 subId, ) = createSubscription(vrfCordinator);
         return (subId, vrfCordinator);
     }
 
@@ -30,5 +30,33 @@ contract CreateSubscription is Script {
         return (subId, vrfCordinator);
     }
 
-    function run() public {}
+    function run() public {
+        createSubscriptionUsingConfig();
+    }
+}
+
+contract FundSubscription is Script {
+    uint256 public constant FUND_AMOUNT = 3 ether; //3 LINK
+
+    function subSubscriptionUsingConfig() public {
+        HelperConfig helperConfig = new HelperConfig();
+        address vrfCordinator = helperConfig.getConfig().vrfCoordinator;
+        uint256 subscriptionId = helperConfig.getConfig().subscriptionId;
+        address linkToken = helperConfig.getConfig().link;
+        fundSubscription(vrfCordinator, subscriptionId, linkToken);
+    }
+
+    function fundSubscription(
+        address vrfCoordinator,
+        uint256 subscriptionId,
+        address linkToken
+    ) public {
+        console.log("Funding subscription: ", subscriptionId);
+        console.log("Using VrfCoordinator: ", vrfCoordinator);
+        console.log("Onchain Id: ", block.chainid);
+    }
+
+    function run() public {
+        subSubscriptionUsingConfig();
+    }
 }
