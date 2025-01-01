@@ -5,8 +5,9 @@ pragma solidity ^0.8.19;
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
-import {Test, console2} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -25,7 +26,6 @@ contract RaffleTest is Test {
     uint256 raffleEntranceFee;
     uint32 callbackGasLimit;
     address vrfCoordinatorV2_5;
-    // LinkToken link;
 
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
@@ -177,5 +177,61 @@ contract RaffleTest is Test {
         Raffle.RaffleState raffleState = raffle.getRaffleState();
         assert(uint256(requestId) > 0);
         assert(uint256(raffleState) == 1);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            FULFILRANDOMWORDS
+    //////////////////////////////////////////////////////////////*/
+    function testFulfillrandomwordsCanOnlyBeCalledAfterPerformUpkeep(
+        uint256 randomRequestId
+    ) public raffleEntered {
+        //Arrange/assert/Act
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(vrfCoordinatorV2_5).fulfillRandomWords(
+            randomRequestId,
+            address(raffle)
+        );
+    }
+
+    function testFulfillrandomwordsPicksAWinnerResetsAndSendsMoney()
+        public
+        raffleEntered
+    {
+        //arrange
+        uint256 additionalEntrance = 3; //4 people in total entered the raffle
+        uint256 startintIndex = 1;
+        address expectedWinner = address(1);
+        for (
+            uint256 i = startintIndex;
+            i < startintIndex + additionalEntrance;
+            i++
+        ) {
+            address newPlayer = address(uint160(i)); //address of 1 or 2 or 3 or 4
+            hoax(newPlayer, 1 ether);
+            raffle.enterRaffle{value: raffleEntranceFee}();
+        }
+        uint256 startingTimeStamp = raffle.getLastTimeStamp();
+        uint256 winnerStartingBalance = expectedWinner.balance;
+
+        //act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+        VRFCoordinatorV2_5Mock(vrfCoordinatorV2_5).fulfillRandomWords(
+            uint256(requestId),
+            address(raffle)
+        );
+
+        //assert
+        address recentWinner = raffle.getRecentWinner();
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        uint256 winnerBalance = recentWinner.balance;
+        uint256 endingTimeStamp = raffle.getLastTimeStamp();
+        uint256 prize = raffleEntranceFee * (additionalEntrance + 1);
+        assert(recentWinner == expectedWinner);
+        assert(uint256(raffleState) == 0);
+        assert(winnerBalance == winnerStartingBalance + prize);
+        assert(endingTimeStamp > startingTimeStamp);
     }
 }
