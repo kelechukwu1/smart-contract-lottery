@@ -108,9 +108,9 @@ contract FundSubscription is Script, CodeConstants {
             vm.startBroadcast();
             VRFCoordinatorV2_5Mock(vrfCoordinator).fundSubscription(
                 subscriptionId,
-                FUND_AMOUNT
+                FUND_AMOUNT * 100
             );
-            console.log("funded with:", FUND_AMOUNT);
+            console.log("funded with:", FUND_AMOUNT * 100);
             vm.stopBroadcast();
         } else {
             console.log(LinkToken(linkToken).balanceOf(msg.sender));

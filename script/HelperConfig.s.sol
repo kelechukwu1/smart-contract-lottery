@@ -102,7 +102,7 @@ contract HelperConfig is Script, CodeConstants {
             MOCK_WEI_PER_UINT_LINK
         );
         LinkToken linkToken = new LinkToken();
-        uint256 subscriptionId = vrfCoordinatorMock.createSubscription();
+        // uint256 subscriptionId = vrfCoordinatorMock.createSubscription();
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
@@ -110,7 +110,8 @@ contract HelperConfig is Script, CodeConstants {
             interval: 30, //30 seconds
             vrfCoordinator: address(vrfCoordinatorMock),
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, //doesn't matter
-            subscriptionId: subscriptionId, //we might fix this later
+            // subscriptionId: subscriptionId,
+            subscriptionId: 0, //we might fix this later
             callbackGasLimit: 500000, //500,000 gas   //doesn't matter
             link: address(linkToken),
             account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38

@@ -166,7 +166,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 callbackGasLimit: i_callbackGasLimit,
                 numWords: NUMBER_OF_WORDS,
                 extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: true})
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
                 ) // new parameter
             });
 
